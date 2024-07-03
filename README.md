@@ -132,7 +132,7 @@ High-resolution image understanding.
   title={TokenPacker: Efficient Visual Projector for Multimodal LLM},
   author={Wentong Li, Yuqian Yuan, Jian Liu, Dongqi Tang, Song Wang, Jianke Zhu and Lei Zhang},
   year={2024},
-  eprint={},
+  eprint={2407.02392},
   archivePrefix={arXiv},
   primaryClass={cs.CV}
 }

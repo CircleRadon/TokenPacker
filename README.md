@@ -14,7 +14,10 @@
 <a href="" target="_blank">
     <img alt="HF Model" src="https://img.shields.io/badge/%F0%9F%A4%97%20_Model-HuggingFace-ffc107?color=ffc107&logoColor=white" height="25" />
 </a>
-</div>
+<a href="https://zhuanlan.zhihu.com/p/707021763" target="_blank">
+    <img alt="ZhiHu" src="https://img.shields.io/badge/Blog-ZhiHu-1E90FF?logo=zhihu&logoColor=02B5FD" height="25" />
+</a>   
+ </div>
 
 
 ---

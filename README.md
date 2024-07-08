@@ -86,7 +86,7 @@ Note: Using `--down_rate` to control compression ratio, support [2,3,4]
 ### LLaVA-TokenPacker-HD
 
 #### Dataset
-To obtain the competitive high-resolution performance, we use 2.7M data as orginazed by [Mini-Gemini](https://github.com/dvlab-research/MGM#Dataset), i.e., 1.2M for stage 1 and 1.5M for stage 2.
+To obtain the competitive high-resolution performance, we use 2.7M data as organized by [Mini-Gemini](https://github.com/dvlab-research/MGM#Dataset), i.e., 1.2M for stage 1 and 1.5M for stage 2.
 
 #### Training 
 - Stage1: Image-Text Alignment Pre-training

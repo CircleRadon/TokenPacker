@@ -4,7 +4,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path vicuna-7b-v1.5 \
     --version plain \
-    --data_path /path/to/blip_laion_cc_sbu_558k.json \
+    --data_path /path/to/mgm_pretrain.json \
     --image_folder ./data/llava_pretrain_558k \
     --vision_tower ./clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
@@ -18,7 +18,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed llava/train/train_mem.py \
     --bf16 True \
     --output_dir ./checkpoints/llava-tokenpacker-pretrain-hd/ \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 2 \
+    --per_device_train_batch_size 32 \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \

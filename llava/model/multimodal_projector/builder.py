@@ -51,7 +51,7 @@ class TokenPacker(nn.Module):
         if raw_grid%down_rate!=0:
             raise ValueError("down_rate must be divisible by grid size")
         self.raw_grid = raw_grid
-        self.grid_size = grid//down_rate
+        self.grid_size = raw_grid//down_rate
         self.num_queries = self.grid_size ** 2
         self.embed_dim = embed_dim
         self.num_heads = num_heads

@@ -60,6 +60,7 @@ class ModelArguments:
     mm_use_im_start_end: bool = field(default=False)
     mm_use_im_patch_token: bool = field(default=True)
     mm_vision_select_feature: Optional[str] = field(default="patch")
+    down_rate: int = 2
 
 
 @dataclass
@@ -318,7 +319,7 @@ def preprocess_multimodal(
                 sentence['value'] = DEFAULT_IMAGE_TOKEN + '\n' + sentence['value']
                 sentence['value'] = sentence['value'].strip()
                 if "mmtag" in conversation_lib.default_conversation.version:
-                #     sentence['value'] = sentence['value'].replace(DEFAULT_IMAGE_TOKEN, '<Image>' + DEFAULT_IMAGE_TOKEN + '</Image>')
+                    sentence['value'] = sentence['value'].replace(DEFAULT_IMAGE_TOKEN, '<Image>' + DEFAULT_IMAGE_TOKEN + '</Image>')
             replace_token = DEFAULT_IMAGE_TOKEN
             if data_args.mm_use_im_start_end:
                 replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN
@@ -690,6 +691,7 @@ class LazySupervisedDataset(Dataset):
                         return result
                 image = expand2square(image, tuple(int(x*255) for x in processor.image_mean))
                 image_tensor = processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
+                image_tensor = image_tensor.unsqueeze(0)
             elif self.data_args.image_aspect_ratio == 'slice':
                 image = self.preprocess(image)
                 image = image.unsqueeze(0)
@@ -729,6 +731,7 @@ class LazySupervisedDataset(Dataset):
                 image_tensor = torch.cat(split_images, dim=0)
             else:
                 image_tensor = processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
+                image_tensor = image_tensor.unsqueeze(0)
 
             sources = preprocess_multimodal(
                 copy.deepcopy([e["conversations"] for e in sources]),

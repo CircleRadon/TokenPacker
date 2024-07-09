@@ -81,7 +81,7 @@ bash scripts/v1_5/pretrain.sh
 ```shell
 bash scripts/v1_5/finetune.sh
 ```
-Note: Using `--down_rate` to control compression ratio, support [2,3,4]
+Note: Using `--scale_factor` to control compression ratio, support [2,3,4]
 
 ### LLaVA-TokenPacker-HD
 
@@ -99,7 +99,7 @@ bash scripts/v1_5/finetune_hd.sh
 ```
 
 Note: 
-1. Using `--down_rate` to control compression ratio, support [2,3,4]. 
+1. Using `--scale_factor` to control compression ratio, support [2,3,4]. 
 2. Using `--patch_num` to control max patch dividing number, support [9,16,25].
 
 

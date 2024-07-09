@@ -44,18 +44,18 @@ class TokenPacker(nn.Module):
             num_heads=1024//128,
             kv_dim=1024,
             hidden_size=4096,
-            down_rate=2,
+            scale_factor=2,
             norm_layer=partial(nn.LayerNorm, eps=1e-6)
     ):
         super().__init__()
-        if raw_grid%down_rate!=0:
-            raise ValueError("down_rate must be divisible by grid size")
+        if raw_grid%scale_factor!=0:
+            raise ValueError("scale_factor must be divisible by grid size")
         self.raw_grid = raw_grid
-        self.grid_size = raw_grid//down_rate
+        self.grid_size = raw_grid//scale_factor
         self.num_queries = self.grid_size ** 2
         self.embed_dim = embed_dim
         self.num_heads = num_heads
-        self.down_rate = down_rate
+        self.scale_factor = scale_factor
         self.q_proj_1 = nn.Linear(kv_dim, embed_dim, bias=False)
 
         k_modules = [nn.Linear(4096, 1024)]
@@ -120,8 +120,8 @@ class TokenPacker(nn.Module):
         query = self.ln_q_1(self.q_proj_1(q)).permute(1, 0, 2)
 
         reshape_query = self.divide_feature(query, 1, self.num_queries, N, c)
-        reshape_key = self.divide_feature(key, self.down_rate, token_num, N, c)
-        reshape_value = self.divide_feature(value, self.down_rate, token_num, N, value.shape[-1])
+        reshape_key = self.divide_feature(key, self.scale_factor, token_num, N, c)
+        reshape_value = self.divide_feature(value, self.scale_factor, token_num, N, value.shape[-1])
 
         out = self.clip_attn(
             reshape_query,
@@ -142,4 +142,4 @@ class TokenPacker(nn.Module):
 
 
 def build_vision_projector(config):
-    return TokenPacker(hidden_size=config.hidden_size, down_rate=config.down_rate)
+    return TokenPacker(hidden_size=config.hidden_size, scale_factor=config.scale_factor)

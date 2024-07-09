@@ -60,7 +60,7 @@ class ModelArguments:
     mm_use_im_start_end: bool = field(default=False)
     mm_use_im_patch_token: bool = field(default=True)
     mm_vision_select_feature: Optional[str] = field(default="patch")
-    down_rate: int = 2
+    scale_factor: int = 2
 
 
 @dataclass

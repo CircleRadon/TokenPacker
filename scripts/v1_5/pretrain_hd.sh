@@ -9,7 +9,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed llava/train/train_mem.py \
     --vision_tower ./clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --patch_num 9 \
-    --down_rate 2 \
+    --scale_factor 2 \
     --tune_mm_mlp_adapter True \
     --mm_vision_select_layer -2 \
     --mm_use_im_start_end False \

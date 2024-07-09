@@ -66,7 +66,7 @@ class LlavaMetaModel:
         self.config.mm_hidden_size = vision_tower.hidden_size
         self.config.mm_vision_select_layer = mm_vision_select_layer
         self.config.mm_vision_select_feature = mm_vision_select_feature
-        self.config.down_rate = model_args.down_rate 
+        self.config.scale_factor = model_args.scale_factor 
 
         if getattr(self, 'mm_projector', None) is None:
             self.mm_projector = build_vision_projector(self.config)

@@ -84,11 +84,6 @@ def eval_model(args):
     image_patch = Image_Patch(patch_num=16)
     preprocess = Compose([ToTensor(), Normalize((0.48145466, 0.4578275, 0.40821073),(0.26862954, 0.26130258, 0.27577711))])
 
-
-    # dino_tower = model.get_dino_vision_tower()
-    # if not dino_tower.is_loaded:
-    #     dino_tower.load_model()
-
     questions = pd.read_table(os.path.expanduser(args.question_file))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -175,6 +170,9 @@ def eval_model(args):
                 image_tensor = torch.cat(split_images, dim=0)
             else:
                 image_tensor = process_images([image], image_processor, model.config)[0]
+                image_tensor = image_tensor.unsqueeze(0)
+                h_block = 1
+                w_block = 1
 
             stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
 

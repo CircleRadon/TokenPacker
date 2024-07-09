@@ -48,7 +48,6 @@ def eval_model(args):
         model_path,   
         torch_dtype=torch.bfloat16,
     ).cuda()
-    # tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
 
     for m in model.modules():
         m.tokenizer = tokenizer
@@ -124,8 +123,9 @@ def eval_model(args):
             image_tensor = torch.cat(split_images, dim=0)
         else:
             image_tensor = process_images([image], image_processor, model.config)[0]
-
-
+            image_tensor = image_tensor.unsqueeze(0)
+            h_block = 1
+            w_block = 1
 
         stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         keywords = [stop_str]

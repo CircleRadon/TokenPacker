@@ -98,6 +98,9 @@ class CustomDataset(Dataset):
                 image_tensor = torch.cat(split_images, dim=0)
         else:
             image_tensor = process_images([image], self.image_processor, self.model_config)[0]
+            image_tensor = image_tensor.unsqueeze(0)
+            h_block = 1
+            w_block = 1
 
         input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt')
 

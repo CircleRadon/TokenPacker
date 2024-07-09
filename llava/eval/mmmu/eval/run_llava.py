@@ -76,10 +76,6 @@ def main():
             assert len(value) == 1, 'key {} has more than one value'.format(key)
             args.config[key] = value[0]
 
-    # load model
-    # tokenizer, model, vis_processors, _ = load_pretrained_model(args.model_path, None,
-    #                                                             model_name, 
-    #                                                             load_8bit=args.load_8bit)
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
     tokenizer = AutoTokenizer.from_pretrained(
@@ -170,6 +166,9 @@ def main():
                 image_tensor = torch.cat(split_images, dim=0)
             else:
                 image_tensor = process_images([sample['image']], image_processor, model.config)[0]
+                image_tensor = image_tensor.unsqueeze(0)
+                h_block = 1
+                w_block = 1
 
             sample['image'] = image_tensor
             

@@ -143,6 +143,9 @@ def eval_worker(args, data):
             image_tensor = torch.cat(split_images, dim=0)
         else:
             image_tensor = process_images([image], self.image_processor, self.model_config)[0]
+            image_tensor = image_tensor.unsqueeze(0)
+            h_block = 1
+            w_block = 1
 
         input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
         if data[i].get("predict", 0)!=0:

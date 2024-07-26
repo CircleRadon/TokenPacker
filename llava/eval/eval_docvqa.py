@@ -7,7 +7,6 @@ import shortuuid
 
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
-from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 from torch.utils.data import Dataset, DataLoader
@@ -39,7 +38,8 @@ class CustomDataset(Dataset):
         self.tokenizer = tokenizer
         self.image_processor = image_processor
         self.model_config = model_config
-        self.image_patch = Image_Patch()
+        self.patch_num = getattr(model_config, 'patch_num', '9')
+        self.image_patch = Image_Patch(patch_num=int(self.patch_num))
         self.preprocess = Compose([ToTensor(), Normalize((0.48145466, 0.4578275, 0.40821073),(0.26862954, 0.26130258, 0.27577711))])
 
 
@@ -62,7 +62,7 @@ class CustomDataset(Dataset):
         image = Image.open(os.path.join(self.image_folder, image_file)).convert('RGB')
 
         if self.model_config.image_aspect_ratio == 'slice':
-            image_tensor = process_images([image], self.image_processor, self.model_config)[0]
+            image = self.preprocess(image)
             image = image.unsqueeze(0)
             h, w = image.shape[-2:]
             block_size = 336

@@ -11,7 +11,7 @@
 <a href="https://arxiv.org/abs/2407.02392" target="_blank">
     <img alt="arXiv" src="https://img.shields.io/badge/arXiv-2407.02392-red?logo=arxiv" height="25" />
 </a>
-<a href="" target="_blank">
+<a href="https://huggingface.co/collections/sunshine-lwt/tokenpacker-66a234618f0d2327e0cf2cb1" target="_blank">
     <img alt="HF Model" src="https://img.shields.io/badge/%F0%9F%A4%97%20_Model-HuggingFace-ffc107?color=ffc107&logoColor=white" height="25" />
 </a>
 <a href="https://zhuanlan.zhihu.com/p/707021763" target="_blank">
@@ -29,6 +29,7 @@
 </p>
 
 ## Updates 📌
+- [2024/7/25] We released [checkpoints](https://huggingface.co/collections/sunshine-lwt/tokenpacker-66a234618f0d2327e0cf2cb1), please check them.
 - [2024/7/3] We released the [paper](https://arxiv.org/abs/2407.02392) of our TokenPacker on Arxiv.
 - [2024/7/3] We released the training and inference codes. 
 
@@ -39,6 +40,10 @@ to inject the enriched characteristics to generate the condensed visual tokens. 
 visual tokens by **75%∼89%**, while achieves comparable or even better performance
 across diverse benchmarks with significantly higher efficiency.
 <img src="./assets/framework2.jpg" width="800px">
+
+#### Comparisons with various projectors 
+<img src="./assets/projector_comparsion.jpg" width="800px">
+
 
 ## High-Resolution Image Understanding with TokenPacker 🔬
 To support efficient `high-resolution` image understanding, we further develop an effective image
@@ -107,7 +112,26 @@ Note:
 
 <img src="./assets/ex1.png" width="800px">
 
-<img src="./assets/ex2.jpg" width="800px">
+<img src="./assets/high-reso.jpg" width="800px">
+
+
+## Model Zoo
+
+| Model              |  Max Res.   |  Compre. Ratio  |  Token Num.  |  Max Patch Num.  |                                           Training Data                                            | Download                                                                              |
+|--------------------|:-----------:|:---------------:|:------------:|:----------------:|:--------------------------------------------------------------------------------------------------:|---------------------------------------------------------------------------------------|
+| TokenPacker-7b     |   336x336   |       1/4       |     144      |        -         |                                             558K+665K                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-7b-144token/tree/main)  |
+| TokenPacker-7b     |   336x336   |       1/4       |     144      |        -         |                                             558K+665K                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-13b-144token/tree/main) |
+| TokenPacker-HD-7b  |  1088x1088  |       1/4       |     ~954     |        9         |                                             1.2M+1.3M                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-7b-9patch-144token/tree/main) |
+| TokenPacker-HD-13b |  1088x1088  |       1/4       |     ~954     |        9         |                                             1.2M+1.3M                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-13b-9patch-144token/tree/main) |
+| TokenPacker-HD-13b |  1344x1344  |       1/4       |    ~1393     |        16        |                                             1.2M+1.3M                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-13b-16patch-144token/tree/main) |
+| TokenPacker-HD-13b |  1344x1344  |       1/9       |     ~619     |        16        |                                             1.2M+1.3M                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-13b-16patch-64token/tree/main)                                                                       |
+| TokenPacker-HD-13b |  1344x1344  |      1/16       |     ~347     |        16        |                                             1.2M+1.3M                                              |  [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-13b-16patch-36token/tree/main)                                                                      |
+
+Note: 
+- The `token number` of TokenPacker-HD is the `average` statistically across all training and test data.
+- The training data of `558K+665K` follows LLaVA-1.5, the one of `1.2M+1.3M` follows Mini-Gemini.
+- All LLMs use Vicuna-7b/13b  as based LLM.
+
 
 ## Visualization
 We provide some visual examples.
@@ -121,11 +145,12 @@ High-resolution image understanding.
 
 ## TODO List 📝
 - [x] Release the training and inference codes.
-- [ ] Release all checkpoints.
+- [x] Release all checkpoints.
 
 
 ## Acknowledgement 💌
 - [LLaVA-v1.5](https://github.com/haotian-liu/LLaVA): the codebase we built upon.
+- [Mini-Gemini](https://github.com/dvlab-research/MGM): the organized data we used for training high-resolution method.
   
 
 

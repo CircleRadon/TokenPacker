@@ -7,7 +7,6 @@ import shortuuid
 
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
-from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
 
@@ -58,7 +57,8 @@ def eval_model(args):
     vision_tower.to(device='cuda', dtype=torch.float16)
     image_processor = vision_tower.image_processor
 
-    image_patch = Image_Patch(patch_num=16)
+    patch_num = getattr(model.config, 'patch_num', '9')
+    image_patch = Image_Patch(patch_num=int(patch_num))
     preprocess = Compose([ToTensor(), Normalize((0.48145466, 0.4578275, 0.40821073),(0.26862954, 0.26130258, 0.27577711))])
 
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
@@ -130,10 +130,12 @@ def eval_model(args):
         stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         keywords = [stop_str]
         stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
+        mode = model.config.image_aspect_ratio
 
         with torch.inference_mode():
             model.orig_forward = model.forward
             model.forward = partial(model.orig_forward,
+                                    mode=mode,
                                     h_block=[h_block],
                                     w_block=[w_block]
                                     )

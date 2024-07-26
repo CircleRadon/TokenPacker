@@ -8,7 +8,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed llava/train/train_mem.py \
     --image_folder ./data/MGM-Finetune \
     --vision_tower ./clip-vit-large-patch14-336 \
     --pretrain_mm_mlp_adapter ./checkpoints/llava-tokenpacker-pretrain-hd/mm_projector.bin \
-    --mm_projector_type mlp2x_gelu \
+    --mm_projector_type tokenpacker \
     --patch_num 9 \
     --scale_factor 2 \
     --mm_vision_select_layer -2 \

@@ -7,7 +7,6 @@ import shortuuid
 
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
-from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 from torch.utils.data import Dataset, DataLoader
@@ -39,7 +38,8 @@ class CustomDataset(Dataset):
         self.tokenizer = tokenizer
         self.image_processor = image_processor
         self.model_config = model_config
-        self.image_patch = Image_Patch(patch_num=16)
+        self.patch_num = getattr(model_config, 'patch_num', '9')
+        self.image_patch = Image_Patch(patch_num=int(self.patch_num))
         self.preprocess = Compose([ToTensor(), Normalize((0.48145466, 0.4578275, 0.40821073),(0.26862954, 0.26130258, 0.27577711))])
 
 
@@ -154,6 +154,7 @@ def eval_model(args):
         print(f'It seems that this is a plain model, but it is not using a mmtag prompt, auto switching to {args.conv_mode}.')
 
     data_loader = create_data_loader(questions, args.image_folder, tokenizer, image_processor, model.config)
+    mode = model.config.image_aspect_ratio
 
     for (input_ids, image_tensor, h_block, w_block), line in tqdm(zip(data_loader, questions), total=len(questions)):
         idx = line["question_id"]
@@ -166,6 +167,7 @@ def eval_model(args):
         with torch.inference_mode():
             model.orig_forward = model.forward
             model.forward = partial(model.orig_forward,
+                                    mode=mode,
                                     h_block=h_block,
                                     w_block=w_block
                                     )

@@ -5,7 +5,7 @@ from llava.conversation import conv_templates, SeparatorStyle
 from functools import partial
 from llava.mm_utils import tokenizer_image_token
 
-def call_llava_engine_df(args, sample, model, tokenizer=None, processor=None, h_block=None, w_block=None):
+def call_llava_engine_df(args, sample, model, tokenizer=None, processor=None, h_block=None, w_block=None, mode=None):
 
     def deal_with_prompt(input_text, mm_use_im_start_end, ocr_tokens):
         if ocr_tokens is not None:
@@ -31,6 +31,7 @@ def call_llava_engine_df(args, sample, model, tokenizer=None, processor=None, h_
     if image is not None:
         model.orig_forward = model.forward
         model.forward = partial(model.orig_forward,
+                            mode=mode,
                             h_block = [h_block],
                             w_block = [w_block]
                             )

@@ -11,7 +11,6 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, BitsAn
 from llava.model import *
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
-from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, process_images, get_model_name_from_path
 import torch.nn.functional as F
@@ -56,8 +55,7 @@ num_all = {"IIIT5K":0,"svt":0,"IC13_857":0,"IC15_1811":0,"svtp":0,"ct80":0,"coco
 "STVQA":0,"textVQA":0,"ocrVQA":0,"ESTVQA":0,"ESTVQA_cn":0,"docVQA":0,"infographicVQA":0,"ChartQA":0,"ChartQA_Human":0,"FUNSD":0,"SROIE":0,"POIE":0,"HME100k":0}
 
 def eval_worker(args, data):
-    # print(f"Process {eval_id} start.")
-    # device = f"cuda:{eval_id}"
+
     disable_torch_init()
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
@@ -82,7 +80,8 @@ def eval_worker(args, data):
     vision_tower.to(device='cuda', dtype=torch.float16)
     image_processor = vision_tower.image_processor
 
-    image_patch = Image_Patch(patch_num=16)
+    patch_num = getattr(model.config, 'patch_num', '9')
+    image_patch = Image_Patch(patch_num=int(patch_num))
     preprocess = Compose([ToTensor(), Normalize((0.48145466, 0.4578275, 0.40821073),(0.26862954, 0.26130258, 0.27577711))])
 
 
@@ -153,9 +152,11 @@ def eval_worker(args, data):
             continue
     
         stop_str = conv_templates[args.conv_mode].sep if conv_templates[args.conv_mode].sep_style != SeparatorStyle.TWO else conv_templates[args.conv_mode].sep2
+        mode = model.config.image_aspect_ratio
         with torch.inference_mode():
             model.orig_forward = model.forward
             model.forward = partial(model.orig_forward,
+                                    mode=mode,
                                     h_block = [h_block],
                                     w_block = [w_block]
                                     )

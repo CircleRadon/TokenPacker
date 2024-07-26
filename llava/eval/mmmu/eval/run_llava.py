@@ -98,7 +98,8 @@ def main():
     vision_tower.to(device='cuda', dtype=torch.float16)
     image_processor = vision_tower.image_processor
 
-    image_patch = Image_Patch(patch_num=16)
+    patch_num = getattr(model.config, 'patch_num', '9')
+    image_patch = Image_Patch(patch_num=int(patch_num))
     preprocess = Compose([ToTensor(), Normalize((0.48145466, 0.4578275, 0.40821073),(0.26862954, 0.26130258, 0.27577711))])
 
 
@@ -127,8 +128,9 @@ def main():
 
         sample = construct_prompt(sample, args.config)
         if sample['image']:
+            image = sample['image'].convert('RGB')
             if model.config.image_aspect_ratio == 'slice':
-                image = preprocess(sample['image'].convert('RGB'))
+                image = preprocess(image)
                 image = image.unsqueeze(0)
                 h, w = image.shape[-2:]
                 block_size = 336
@@ -165,7 +167,7 @@ def main():
                     split_images.append(image_s)
                 image_tensor = torch.cat(split_images, dim=0)
             else:
-                image_tensor = process_images([sample['image']], image_processor, model.config)[0]
+                image_tensor = process_images([image], image_processor, model.config)[0]
                 image_tensor = image_tensor.unsqueeze(0)
                 h_block = 1
                 w_block = 1
@@ -173,8 +175,9 @@ def main():
             sample['image'] = image_tensor
             
         # samples.append(sample)
+        mode = model.config.image_aspect_ratio
         with torch.no_grad():
-            response = call_model_engine(args, sample, model, tokenizer, processor, h_block, w_block)
+            response = call_model_engine(args, sample, model, tokenizer, processor, h_block, w_block, mode)
             if sample['question_type'] == 'multiple-choice':
                 parsed_pred = parse_multi_choice_response(response, sample['all_choices'], sample['index2ans'])
                 out_sample = {

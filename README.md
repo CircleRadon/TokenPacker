@@ -104,8 +104,8 @@ bash scripts/v1_5/finetune_hd.sh
 ```
 
 Note: 
-1. Using `--scale_factor` to control compression ratio, support [2,3,4]. 
-2. Using `--patch_num` to control max patch dividing number, support [9,16,25].
+- Using `--scale_factor` to control compression ratio, support [2,3,4].
+- Using `--patch_num` to control max patch dividing number, support [9,16,25].
 
 
 ## Experiments

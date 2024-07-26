@@ -121,15 +121,15 @@ Note:
 |--------------------|:-----------:|:---------------:|:------------:|:----------------:|:--------------------------------------------------------------------------------------------------:|---------------------------------------------------------------------------------------|
 | TokenPacker-7b     |   336x336   |       1/4       |     144      |        -         |                                             558K+665K                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-7b-144token/tree/main)  |
 | TokenPacker-7b     |   336x336   |       1/4       |     144      |        -         |                                             558K+665K                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-13b-144token/tree/main) |
-| TokenPacker-HD-7b  |  1088x1088  |       1/4       |     ~954     |        9         |                                             1.2M+1.3M                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-7b-9patch-144token/tree/main) |
-| TokenPacker-HD-13b |  1088x1088  |       1/4       |     ~954     |        9         |                                             1.2M+1.3M                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-13b-9patch-144token/tree/main) |
-| TokenPacker-HD-13b |  1344x1344  |       1/4       |    ~1393     |        16        |                                             1.2M+1.3M                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-13b-16patch-144token/tree/main) |
-| TokenPacker-HD-13b |  1344x1344  |       1/9       |     ~619     |        16        |                                             1.2M+1.3M                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-13b-16patch-64token/tree/main)                                                                       |
-| TokenPacker-HD-13b |  1344x1344  |      1/16       |     ~347     |        16        |                                             1.2M+1.3M                                              |  [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-13b-16patch-36token/tree/main)                                                                      |
+| TokenPacker-HD-7b  |  1088x1088  |       1/4       |     ~954     |        9         |                                             1.2M+1.5M                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-7b-9patch-144token/tree/main) |
+| TokenPacker-HD-13b |  1088x1088  |       1/4       |     ~954     |        9         |                                             1.2M+1.5M                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-13b-9patch-144token/tree/main) |
+| TokenPacker-HD-13b |  1344x1344  |       1/4       |    ~1393     |        16        |                                             1.2M+1.5M                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-13b-16patch-144token/tree/main) |
+| TokenPacker-HD-13b |  1344x1344  |       1/9       |     ~619     |        16        |                                             1.2M+1.5M                                              | [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-13b-16patch-64token/tree/main)                                                                       |
+| TokenPacker-HD-13b |  1344x1344  |      1/16       |     ~347     |        16        |                                             1.2M+1.5M                                              |  [checkpoints](https://huggingface.co/sunshine-lwt/TokenPacker-HD-13b-16patch-36token/tree/main)                                                                      |
 
 Note: 
 - The `token number` of TokenPacker-HD is the `average` statistically across all training and test data.
-- The training data of `558K+665K` follows LLaVA-1.5, the one of `1.2M+1.3M` follows Mini-Gemini.
+- The training data of `558K+665K` follows LLaVA-1.5, the one of `1.2M+1.5M` follows Mini-Gemini.
 - All LLMs use Vicuna-7b/13b  as based LLM.
 
 

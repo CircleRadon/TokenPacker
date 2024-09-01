@@ -41,6 +41,9 @@ visual tokens by **75%∼89%**, while achieves comparable or even better perform
 across diverse benchmarks with significantly higher efficiency.
 <img src="./assets/framework2.jpg" width="800px">
 
+#### Core codes
+As a visual projector, TokenPacker is implemented by a `class TokenPacker`, which can be found in [multimodal_projector/builder.py](./llava/model/multimodal_projector/builder.py#L39)
+
 #### Comparisons with various projectors 
 <img src="./assets/projector_comparsion.jpg" width="800px">
 

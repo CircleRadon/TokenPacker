@@ -16,4 +16,3 @@ for line_idx, line in enumerate(open(args.src)):
 
 with open(args.dst, 'w') as f:
     json.dump(all_answers, f)
-

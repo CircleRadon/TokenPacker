@@ -43,21 +43,18 @@ class TokenPacker(nn.Module):
             embed_dim=1024,
             num_heads=1024//128,
             kv_dim=1024,
-            hidden_size=4096,
-            scale_factor=2,
             norm_layer=partial(nn.LayerNorm, eps=1e-6)
     ):
         super().__init__()
-        if raw_grid%scale_factor!=0:
-            raise ValueError("scale_factor must be divisible by grid size")
         self.raw_grid = raw_grid
-        self.grid_size = raw_grid//scale_factor
+        self.scale_factor = 2  #downsampling ratio=self.scale_factor **2
+        self.grid_size = self.raw_grid//self.scale_factor
         self.num_queries = self.grid_size ** 2
         self.embed_dim = embed_dim
         self.num_heads = num_heads
-        self.scale_factor = scale_factor
-        self.q_proj_1 = nn.Linear(kv_dim, embed_dim, bias=False)
 
+        self.q_proj_1 = nn.Linear(kv_dim, embed_dim, bias=False)
+    
         k_modules = [nn.Linear(4096, 1024)]
         for _ in range(1,2):
             k_modules.append(nn.GELU())
@@ -76,10 +73,10 @@ class TokenPacker(nn.Module):
 
         self.clip_attn = nn.MultiheadAttention(embed_dim, num_heads)
 
-        modules = [nn.Linear(1024, hidden_size)]
+        modules = [nn.Linear(1024, 4096)]
         for _ in range(1, 2):
             modules.append(nn.GELU())
-            modules.append(nn.Linear(hidden_size, hidden_size))
+            modules.append(nn.Linear(4096, 4096))
         self.mlp = nn.Sequential(*modules)
 
         self.apply(self._init_weights)
@@ -114,24 +111,24 @@ class TokenPacker(nn.Module):
 
         token_num, N, c = key.shape
 
-        q = F.interpolate(x.reshape(x.shape[0],self.raw_grid,self.raw_grid,-1).float().permute(0,3,1,2), size=(self.grid_size, self.grid_size), mode='bilinear').permute(0,2,3,1) ## fix
+        q = F.interpolate(x.reshape(x.shape[0],24,24,-1).float().permute(0,3,1,2), size=(self.grid_size, self.grid_size), mode='bilinear').permute(0,2,3,1) ## fix
         q = q.reshape(q.shape[0], -1, q.shape[-1]).to(x.dtype)
 
         query = self.ln_q_1(self.q_proj_1(q)).permute(1, 0, 2)
 
         reshape_query = self.divide_feature(query, 1, self.num_queries, N, c)
-        reshape_key = self.divide_feature(key, self.scale_factor, token_num, N, c)
-        reshape_value = self.divide_feature(value, self.scale_factor, token_num, N, value.shape[-1])
-
+        reshape_key = self.divide_feature(key, 2, token_num, N, c)
+        reshape_value = self.divide_feature(value, 2, token_num, N, value.shape[-1])
+        # Point2Region Atten
         out = self.clip_attn(
             reshape_query,
             reshape_key,
             reshape_value,
             attn_mask=attn_mask)[0]
 
-        x = out
+        x = out 
         x = x.reshape(self.num_queries, N, -1)
-        x = x.permute(1, 0, 2)
+        x = x.permute(1, 0, 2) 
 
         x = self.mlp(x)
         return x
@@ -140,6 +137,6 @@ class TokenPacker(nn.Module):
         return query.unsqueeze(1).repeat(1, N, 1)
 
 
-
-def build_vision_projector(config):
-    return TokenPacker(hidden_size=config.hidden_size, scale_factor=config.scale_factor)
+def build_vision_projector(config, delay_load=False, **kwargs):
+    return TokenPacker()
+    

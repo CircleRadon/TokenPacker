@@ -8,15 +8,12 @@ import shortuuid
 
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates, SeparatorStyle
+from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, process_images, load_image_from_base64, get_model_name_from_path
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, BitsAndBytesConfig
-from llava.model import *
+
+from PIL import Image
 import math
-import torch.nn.functional as F
-from functools import partial
-from llava.patch_divide import Image_Patch
-from torchvision.transforms import Compose, ToTensor, Normalize
 
 
 all_options = ['A', 'B', 'C', 'D']
@@ -59,29 +56,7 @@ def eval_model(args):
     disable_torch_init()
     model_path = os.path.expanduser(args.model_path)
     model_name = get_model_name_from_path(model_path)
-    tokenizer = AutoTokenizer.from_pretrained(
-        args.model_path,
-        model_max_length = 2048,
-        padding_side="right",
-        use_fast = True
-    )
-    model = LlavaLlamaForCausalLM.from_pretrained(
-        args.model_path,   
-        torch_dtype=torch.bfloat16,
-    ).cuda()
-
-    for m in model.modules():
-        m.tokenizer = tokenizer
-
-    vision_tower = model.get_vision_tower()
-    if not vision_tower.is_loaded:
-        vision_tower.load_model()
-    vision_tower.to(device='cuda', dtype=torch.float16)
-    image_processor = vision_tower.image_processor
-
-    patch_num = getattr(model.config, 'patch_num', '9')
-    image_patch = Image_Patch(patch_num=int(patch_num))
-    preprocess = Compose([ToTensor(), Normalize((0.48145466, 0.4578275, 0.40821073),(0.26862954, 0.26130258, 0.27577711))])
+    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
 
     questions = pd.read_table(os.path.expanduser(args.question_file))
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
@@ -130,62 +105,15 @@ def eval_model(args):
 
             input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
 
-            if model.config.image_aspect_ratio == 'slice':
-                image = preprocess(image)
-                image = image.unsqueeze(0)
-                h, w = image.shape[-2:]
-                block_size = 336
-                h_block, w_block = image_patch.calculate(h, w)
-                h_ratio = block_size*h_block/h
-                w_ratio = block_size*w_block/w
-                if h_ratio<=w_ratio:
-                    w_ = min(block_size*w_block, round(w*h_ratio))
-                    h_ = block_size*h_block
-                else:
-                    w_ = block_size*w_block
-                    h_ = min(block_size*h_block, round(h*w_ratio))
-                image_inter = F.interpolate(image, size=(h_,w_), mode='bilinear')
-                image = torch.zeros((1, 3, block_size*h_block, block_size*w_block)).to(dtype=image_inter.dtype, device=image_inter.device)
-                image[:, :, :h_, :w_] = image_inter
-
-                split_images = []
-                for i_ in range(h_block):
-                    for j_ in range(w_block):
-                        image_s = image[:,:,block_size*i_:block_size*(i_+1), block_size*j_:block_size*(j_+1)]
-                        split_images.append(image_s)
-                if len(split_images)>1:
-                    h_ratio = block_size/h
-                    w_ratio = block_size/w
-                    if h_ratio<=w_ratio:
-                        w_ = min(block_size, round(w*h_ratio))
-                        h_ = block_size
-                    else:
-                        w_ = block_size
-                        h_ = min(block_size, round(h*w_ratio))
-                    image_inter = F.interpolate(image, size=(h_,w_), mode='bilinear')
-                    image_s = torch.zeros((1, 3, block_size, block_size)).to(dtype=image_inter.dtype, device=image_inter.device)
-                    image_s[:, :, :h_, :w_] = image_inter
-                    split_images.append(image_s)
-                image_tensor = torch.cat(split_images, dim=0)
-            else:
-                image_tensor = process_images([image], image_processor, model.config)[0]
-                image_tensor = image_tensor.unsqueeze(0)
-                h_block = 1
-                w_block = 1
+            image_tensor = process_images([image], image_processor, model.config)[0]
+            # image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
 
             stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
-            mode = model.config.image_aspect_ratio
 
             with torch.inference_mode():
-                model.orig_forward = model.forward
-                model.forward = partial(model.orig_forward,
-                                    mode=mode,
-                                    h_block = [h_block],
-                                    w_block = [w_block]
-                                    )
                 output_ids = model.generate(
                     input_ids,
-                    images=image_tensor.bfloat16().cuda(),
+                    images=image_tensor.unsqueeze(0).half().cuda(),
                     do_sample=True if args.temperature > 0 else False,
                     temperature=args.temperature,
                     top_p=args.top_p,
@@ -193,8 +121,6 @@ def eval_model(args):
                     # no_repeat_ngram_size=3,
                     max_new_tokens=1024,
                     use_cache=True)
-
-                model.forward = model.orig_forward
 
             input_token_len = input_ids.shape[1]
             n_diff_input_output = (input_ids != output_ids[:, :input_token_len]).sum().item()

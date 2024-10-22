@@ -25,10 +25,11 @@
 ## Comparisons with existing methods 💡
 <!-- <img src="./assets/compare.png" width="80%"> -->
 <p align="center" width="100%">
-<img src="./assets/compare.jpg"  width="60%">
+<img src="./assets/compare.png"  width="60%">
 </p>
 
 ## Updates 📌
+- [2024/10/22] We integrated TokenPacker-HD framework with [Osprey](https://github.com/CircleRadon/Osprey) to achieve fine-grained high-resolution pixel-level understanding with large performance gains. We will release the codes soon for your reference. 
 - [2024/7/25] We released [checkpoints](https://huggingface.co/collections/sunshine-lwt/tokenpacker-66a234618f0d2327e0cf2cb1), please check them.
 - [2024/7/3] We released the [paper](https://arxiv.org/abs/2407.02392) of our TokenPacker on Arxiv.
 - [2024/7/3] We released the training and inference codes. 
@@ -39,7 +40,11 @@ TokenPacker is a novel visual projector, which adopts a `coarse-to-fine` scheme
 to inject the enriched characteristics to generate the condensed visual tokens. Using TokenPacker, we can compress the
 visual tokens by **75%∼89%**, while achieves comparable or even better performance
 across diverse benchmarks with significantly higher efficiency.
-<img src="./assets/framework2.jpg" width="800px">
+<img src="./assets/framework.png" width="800px">
+
+#### Algorithms
+We provide the pseudocodes to show the detailed processing flow.
+<img src="./assets/Algorithm.png" width="800px">
 
 #### Core codes
 As a visual projector, TokenPacker is implemented by a `class TokenPacker`, which can be found in [multimodal_projector/builder.py](./llava/model/multimodal_projector/builder.py#L39)

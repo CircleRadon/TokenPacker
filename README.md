@@ -43,7 +43,7 @@ across diverse benchmarks with significantly higher efficiency.
 <img src="./assets/framework.png" width="800px">
 
 #### Algorithms
-We provide the pseudocodes to show the detailed processing flow.
+We provide the pseudo-codes to showcase the detailed processing flow.
 <img src="./assets/Algorithm.png" width="800px">
 
 #### Core codes

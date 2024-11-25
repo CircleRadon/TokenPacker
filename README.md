@@ -29,7 +29,7 @@
 </p>
 
 ## Updates 📌
-- [2024/10/22] We integrated TokenPacker-HD framework with [Osprey](https://github.com/CircleRadon/Osprey) to achieve fine-grained high-resolution pixel-level understanding with large performance gains. We will release the codes soon for your reference. 
+- [2024/10/22] We integrated TokenPacker-HD framework with [Osprey](https://github.com/CircleRadon/Osprey) to achieve fine-grained high-resolution pixel-level understanding with large performance gains. Please see the codes in this [branch](https://github.com/CircleRadon/TokenPacker/tree/tokenpacker-hd-osprey) for your reference. 
 - [2024/7/25] We released [checkpoints](https://huggingface.co/collections/sunshine-lwt/tokenpacker-66a234618f0d2327e0cf2cb1), please check them.
 - [2024/7/3] We released the [paper](https://arxiv.org/abs/2407.02392) of our TokenPacker on Arxiv.
 - [2024/7/3] We released the training and inference codes. 

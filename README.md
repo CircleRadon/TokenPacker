@@ -160,7 +160,8 @@ High-resolution image understanding.
 - [LLaVA-v1.5](https://github.com/haotian-liu/LLaVA): the codebase we built upon.
 - [Mini-Gemini](https://github.com/dvlab-research/MGM): the organized data we used for training high-resolution method.
   
-
+## More ## 
+For more recent related works, please refer to this repo of  [Awesome-Token-Compress](https://github.com/daixiangzi/Awesome-Token-Compress).
 
 ## BibTeX 🖊️
 ```

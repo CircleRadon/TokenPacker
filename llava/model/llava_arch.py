@@ -16,7 +16,6 @@
 from abc import ABC, abstractmethod
 
 import torch
-import torch.nn as nn
 
 from .multimodal_encoder.builder import build_vision_tower
 from .multimodal_projector.builder import build_vision_projector
@@ -93,12 +92,12 @@ class LlavaMetaForCausalLM(ABC):
         return self.get_model().get_vision_tower()
 
     def encode_images(self, images):
-        image_features = self.get_model().get_vision_tower()(images)
+        image_features, image_features_dict = self.get_model().get_vision_tower()(images)
         image_features = self.get_model().mm_projector(image_features)
-        return image_features
+        return image_features, image_features_dict
 
     def prepare_inputs_labels_for_multimodal(
-        self, input_ids, attention_mask, past_key_values, labels, images, mode, h_block, w_block
+        self, input_ids, masks, attention_mask, past_key_values, labels, images, bs_patch_num, h_block, w_block
     ):
         vision_tower = self.get_vision_tower()
         if vision_tower is None or images is None or input_ids.shape[1] == 1:
@@ -106,16 +105,17 @@ class LlavaMetaForCausalLM(ABC):
                 attention_mask = torch.ones((attention_mask.shape[0], past_key_values[-1][-1].shape[-2] + 1), dtype=attention_mask.dtype, device=attention_mask.device)
             return input_ids, attention_mask, past_key_values, None, labels
 
-        image_features = self.encode_images(images)
-      
+        image_features, image_features_dict = self.encode_images(images)
+
+        mask_feats = self.mask_extractor(image_features_dict, masks, h_block, w_block)
+    
         new_input_embeds = []
         new_labels = [] if labels is not None else None
         cur_image_idx = 0
 
-        if mode=='slice':
-            sep = torch.tensor(self.tokenizer.convert_tokens_to_ids([','])).to(dtype=input_ids.dtype, device=input_ids.device)
-            ret = torch.tensor(self.tokenizer.convert_tokens_to_ids(['\n'])).to(dtype=input_ids.dtype, device=input_ids.device)
- 
+        sep = torch.tensor(self.tokenizer.convert_tokens_to_ids([','])).to(dtype=input_ids.dtype, device=input_ids.device)
+        ret = torch.tensor(self.tokenizer.convert_tokens_to_ids(['\n'])).to(dtype=input_ids.dtype, device=input_ids.device)
+
         for batch_idx, cur_input_ids in enumerate(input_ids):
             if (cur_input_ids == IMAGE_TOKEN_INDEX).sum() == 0:
                 # multimodal LLM, but the current sample is not multimodal
@@ -130,6 +130,7 @@ class LlavaMetaForCausalLM(ABC):
                     new_labels.append(labels[batch_idx])
                 cur_image_idx += 1
                 continue
+
             image_token_indices = torch.where(cur_input_ids == IMAGE_TOKEN_INDEX)[0]
             cur_new_input_embeds = []
             if labels is not None:
@@ -137,25 +138,20 @@ class LlavaMetaForCausalLM(ABC):
                 cur_new_labels = []
                 assert cur_labels.shape == cur_input_ids.shape
             while image_token_indices.numel() > 0:
-                if mode=='slice':
-                    image_feature_list = []
-                    for h in range(h_block[batch_idx]):
-                        for w in range(w_block[batch_idx]):
-                            image_feature_list.append(image_features[cur_image_idx])
-                            cur_image_idx+=1
-                            if w<w_block[batch_idx]-1:
-                                image_feature_list.append(self.get_model().embed_tokens(sep))
-                        image_feature_list.append(self.get_model().embed_tokens(ret))
-                    if h_block[batch_idx] * w_block[batch_idx]>1:
+                image_feature_list = []
+                for h in range(h_block[batch_idx]):
+                    for w in range(w_block[batch_idx]):
                         image_feature_list.append(image_features[cur_image_idx])
-                        image_feature_list.append(self.get_model().embed_tokens(ret))
                         cur_image_idx+=1
-                    
-                    cur_image_features = torch.cat(image_feature_list, dim=0)
-                
-                else:
-                    cur_image_features = image_features[cur_image_idx]
+                        if w<w_block[batch_idx]-1:
+                            image_feature_list.append(self.get_model().embed_tokens(sep))
+                    image_feature_list.append(self.get_model().embed_tokens(ret))
+                if h_block[batch_idx] * w_block[batch_idx]>1:
+                    image_feature_list.append(image_features[cur_image_idx])
+                    image_feature_list.append(self.get_model().embed_tokens(ret))
                     cur_image_idx+=1
+                
+                cur_image_features = torch.cat(image_feature_list, dim=0)
 
                 image_token_start = image_token_indices[0]
                 if getattr(self.config, 'tune_mm_mlp_adapter', False) and getattr(self.config, 'mm_use_im_start_end', False):
@@ -182,9 +178,37 @@ class LlavaMetaForCausalLM(ABC):
                 image_token_indices = torch.where(cur_input_ids == IMAGE_TOKEN_INDEX)[0]
             if cur_input_ids.numel() > 0:
                 if getattr(self.config, 'tune_mm_mlp_adapter', False) and getattr(self.config, 'mm_use_im_start_end', False):
-                    cur_new_input_embeds.append(self.get_model().embed_tokens(cur_input_ids).detach())
+                    mask_idx = torch.nonzero(cur_input_ids==self.tokenizer.convert_tokens_to_ids(['<mask>'])[0])
+                    
+                    _l = 0
+                    for i, idx in enumerate(mask_idx):
+                        cur_new_input_embeds.append(self.get_model().embed_tokens(cur_input_ids[_l:idx[0]]).detach())
+                        ## mask
+                        cur_new_input_embeds.append(mask_feats[batch_idx][i:i+1].detach())
+                        if labels is not None:
+                            cur_labels[idx[0]:idx[0]+1] = torch.full((1,), IGNORE_INDEX, device=labels.device, dtype=labels.dtype)
+                        _l = idx[0]+1
+                    if _l< len(cur_input_ids):
+                        cur_new_input_embeds.append(self.get_model().embed_tokens(cur_input_ids[_l:]).detach())
+                
                 else:
-                    cur_new_input_embeds.append(self.get_model().embed_tokens(cur_input_ids))
+                    mask_idx = torch.nonzero(cur_input_ids==self.tokenizer.convert_tokens_to_ids(['<mask>'])[0])
+                    assert len(mask_idx) == len(mask_feats[batch_idx]), "mask num not equal to mask feats"
+
+                    _l = 0
+                    for i, idx in enumerate(mask_idx):
+                        cur_raw_new_input_embeds = self.get_model().embed_tokens(cur_input_ids[_l:idx[0]])
+                        cur_new_input_embeds.append(cur_raw_new_input_embeds)
+                        ## mask
+                        cur_new_input_embeds.append(mask_feats[batch_idx][i:i+1].to(cur_raw_new_input_embeds.dtype))
+                
+                        if labels is not None:
+                            cur_labels[idx[0]:idx[0]+1] = torch.full((1,), IGNORE_INDEX, device=labels.device, dtype=labels.dtype)
+
+                        _l = idx[0]+1
+                    if _l< len(cur_input_ids):
+                        cur_new_input_embeds.append(self.get_model().embed_tokens(cur_input_ids[_l:]))
+
                 if labels is not None:
                     cur_new_labels.append(cur_labels)
             cur_new_input_embeds = [x.to(device=self.device) for x in cur_new_input_embeds]
@@ -236,6 +260,9 @@ class LlavaMetaForCausalLM(ABC):
         if model_args.mm_use_im_patch_token:
             tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
             self.resize_token_embeddings(len(tokenizer))
+
+        mask_tokens = ['<mask>']
+        num_new_tokens = tokenizer.add_tokens(mask_tokens, special_tokens=True)
 
         if model_args.mm_use_im_start_end:
             num_new_tokens = tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)

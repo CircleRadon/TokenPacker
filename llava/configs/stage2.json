@@ -1,0 +1,32 @@
+
+[
+    {
+        "type": "coco_data",
+        "ann_file": "./data/coco/annotations/instances_train2017.json",
+        "img_prefix": "./data/coco_imgs"
+    },
+
+    {
+        "type": "RefCOCO",
+        "ann_file": "./data/mdetr_annotations/finetune_refcoco_train_with_mask.json",
+        "img_prefix": "./data/coco_imgs"
+     },
+
+    {
+        "type": "RefCOCOP",
+        "ann_file": "./data/mdetr_annotations/finetune_refcoco+_train_with_mask.json",
+        "img_prefix": "./data/coco_imgs"
+     },
+
+    {
+        "type": "PascalPart",
+        "ann_file": "./data/part_data/pascal_part/train.json",
+        "img_prefix": "./data/part_data/pascal_part/VOCdevkit/VOC2010/JPEGImages"
+     },
+     
+     {
+        "type": "PartImagenet",
+        "ann_file": "./data/part_data/partImagenet/train_format.json",
+        "img_prefix": "./data/part_data/partImagenet/train/"
+     }
+]

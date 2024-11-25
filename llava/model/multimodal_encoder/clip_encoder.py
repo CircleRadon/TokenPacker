@@ -7,6 +7,7 @@ from transformers import CLIPVisionModel, CLIPImageProcessor, CLIPVisionConfig
 class CLIPVisionTower(nn.Module):
     def __init__(self, vision_tower, args, delay_load=False):
         super().__init__()
+
         self.is_loaded = False
 
         self.vision_tower_name = vision_tower
@@ -25,10 +26,14 @@ class CLIPVisionTower(nn.Module):
 
         self.is_loaded = True
 
-    def feature_select(self, image_forward_outs, layers=[12,16,22,23]):
+    def feature_select(self, image_forward_outs):
+        layers = [12,16,22,23]
         image_feature_list = []
+        mask_feature_list = []
         for l in layers:
             image_feature_list.append(image_forward_outs.hidden_states[l])
+            mask_feature_list.append(image_forward_outs.hidden_states[l][:, 1:])
+
         image_features_multi = torch.cat(image_feature_list, dim=2)
 
         image_features = image_forward_outs.hidden_states[self.select_layer]
@@ -41,25 +46,25 @@ class CLIPVisionTower(nn.Module):
             image_features = image_features
         else:
             raise ValueError(f'Unexpected select feature: {self.select_feature}')
-        return image_features, image_features_multi
+        return image_features, image_features_multi, mask_feature_list
 
     @torch.no_grad()
     def forward(self, images):
 
         if type(images) is list:
             image_features = []
+            image_features_multi = []
             for image in images:
                 image_forward_out = self.vision_tower(image.to(device=self.device, dtype=self.dtype).unsqueeze(0), output_hidden_states=True)
                 image_feature, image_feature_multi = self.feature_select(image_forward_out)
-
                 image_features.append(image_feature.to(image.dtype))
                 image_features_multi.append(image_feature_multi.to(image.dtype))
 
         else:
             image_forward_outs = self.vision_tower(images.to(device=self.device, dtype=self.dtype), output_hidden_states=True)
-            image_features, image_features_multi = self.feature_select(image_forward_outs)
+            image_features, image_features_multi, mask_feature_list = self.feature_select(image_forward_outs)
 
-        return (image_features.to(images.dtype), image_features_multi.to(images.dtype))
+        return (image_features.to(images.dtype), image_features_multi.to(images.dtype)), mask_feature_list
 
     @property
     def dummy_feature(self):
